@@ -2,6 +2,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const xml2js = require("xml2js");
 const fs = require("fs");
+const crypto = require("crypto");
 
 async function main() {
     const sitemap = await axios.get("https://www.itamar.club/sitemap.xml");
@@ -13,8 +14,8 @@ async function main() {
     ];
 
     const urls = parsed.urlset.url
-    .map(u => u.loc[0])
-    .filter(url => !excluded.includes(url));
+        .map(u => u.loc[0])
+        .filter(url => !excluded.includes(url));
 
     const articles = [];
 
@@ -28,24 +29,42 @@ async function main() {
             const title = $("title").text().trim();
             const paragraphs = [];
 
-$(".sqs-html-content").each((_, block) => {
-    $(block)
-        .find("p, h1, h2, h3, h4, li, blockquote")
-        .each((__, el) => {
-            const text = $(el).text().replace(/\s+/g, " ").trim();
+            $(".sqs-html-content").each((_, block) => {
 
-            if (text.length > 20) {
-                paragraphs.push(text);
-            }
-        });
-});
+                $(block)
+                    .find("p, h1, h2, h3, h4, li, blockquote")
+                    .each((__, el) => {
 
-articles.push({
-    id: articles.length + 1,
-    title,
-    url,
-    paragraphs
-});
+                        const text = $(el)
+                            .text()
+                            .replace(/\s+/g, " ")
+                            .trim();
+
+                        if (text.length > 20) {
+
+                            const pid = crypto
+                                .createHash("sha1")
+                                .update(text)
+                                .digest("hex")
+                                .substring(0, 12);
+
+                            paragraphs.push({
+                                pid,
+                                text
+                            });
+
+                        }
+
+                    });
+
+            });
+
+            articles.push({
+                id: articles.length + 1,
+                title,
+                url,
+                paragraphs
+            });
 
         } catch (err) {
             console.log("Failed:", url);
