@@ -13,7 +13,7 @@ async function main() {
     ];
 
     const urls = parsed.urlset.url
-        .map(u => u.loc[0])
+        .(u => u.loc[0])
         .filter(url => !excluded.includes(url));
 
     const articles = [];
@@ -26,19 +26,26 @@ async function main() {
             const $ = cheerio.load(response.data);
 
             const title = $("title").text().trim();
-            const text = $(".sqs-html-content")
-    .map((_, el) => $(el).text())
-    .get()
-    .join(" ")
-    .replace(/\s+/g, " ")
-    .trim();
+            const paragraphs = [];
 
-            articles.push({
-                id: articles.length + 1,
-                title,
-                url,
-                text
-            });
+$(".sqs-html-content").each((_, block) => {
+    $(block)
+        .find("p, h1, h2, h3, h4, li, blockquote")
+        .each((__, el) => {
+            const text = $(el).text().replace(/\s+/g, " ").trim();
+
+            if (text.length > 20) {
+                paragraphs.push(text);
+            }
+        });
+});
+
+articles.push({
+    id: articles.length + 1,
+    title,
+    url,
+    paragraphs
+});
 
         } catch (err) {
             console.log("Failed:", url);
