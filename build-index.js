@@ -13,8 +13,8 @@ async function main() {
     ];
 
     const urls = parsed.urlset.url
-        .(u => u.loc[0])
-        .filter(url => !excluded.includes(url));
+    .map(u => u.loc[0])
+    .filter(url => !excluded.includes(url));
 
     const articles = [];
 
