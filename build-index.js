@@ -26,7 +26,12 @@ async function main() {
             const $ = cheerio.load(response.data);
 
             const title = $("title").text().trim();
-            const text = $("body").text().replace(/\s+/g, " ").trim();
+            const text = $(".sqs-html-content")
+    .map((_, el) => $(el).text())
+    .get()
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
 
             articles.push({
                 id: articles.length + 1,
